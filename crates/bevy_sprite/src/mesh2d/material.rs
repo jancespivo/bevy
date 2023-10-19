@@ -32,6 +32,7 @@ use bevy_transform::components::{GlobalTransform, Transform};
 use bevy_utils::{EntityHashMap, FloatOrd, HashMap, HashSet};
 use std::hash::Hash;
 use std::marker::PhantomData;
+use bevy_render::extract_instances::ExtractedInstances;
 
 use crate::{
     DrawMesh2d, Mesh2dHandle, Mesh2dPipeline, Mesh2dPipelineKey, RenderMesh2dInstances,
@@ -374,11 +375,12 @@ pub fn queue_material2d_meshes<M: Material2d>(
     render_materials: Res<RenderMaterials2d<M>>,
     mut render_mesh_instances: ResMut<RenderMesh2dInstances>,
     render_material_instances: Res<RenderMaterial2dInstances<M>>,
+    tonemapping_instances: Res<ExtractedInstances<Tonemapping>>,
+    dither_instances: Res<ExtractedInstances<DebandDither>>,
     mut views: Query<(
+        Entity,
         &ExtractedView,
         &VisibleEntities,
-        Option<&Tonemapping>,
-        Option<&DebandDither>,
         &mut RenderPhase<Transparent2d>,
     )>,
 ) where
@@ -388,7 +390,10 @@ pub fn queue_material2d_meshes<M: Material2d>(
         return;
     }
 
-    for (view, visible_entities, tonemapping, dither, mut transparent_phase) in &mut views {
+    for (entity, view, visible_entities, mut transparent_phase) in &mut views {
+        let tonemapping = tonemapping_instances.get(&entity);
+        let dither = dither_instances.get(&entity);
+
         let draw_transparent_pbr = transparent_draw_functions.read().id::<DrawMaterial2d<M>>();
 
         let mut view_key = Mesh2dPipelineKey::from_msaa_samples(msaa.samples())

@@ -63,6 +63,7 @@ use bevy_render::{
     render_graph::RenderGraph, render_phase::sort_phase_system, render_resource::Shader,
     texture::Image, view::VisibilitySystems, ExtractSchedule, Render, RenderApp, RenderSet,
 };
+use bevy_render::extract_instances::ExtractInstancesPlugin;
 use bevy_transform::TransformSystem;
 use environment_map::EnvironmentMapPlugin;
 
@@ -237,7 +238,7 @@ impl Plugin for PbrPlugin {
                 ExtractResourcePlugin::<AmbientLight>::default(),
                 FogPlugin,
                 ExtractResourcePlugin::<DefaultOpaqueRendererMethod>::default(),
-                ExtractComponentPlugin::<ShadowFilteringMethod>::default(),
+                ExtractInstancesPlugin::<ShadowFilteringMethod>::extract_all(),
             ))
             .configure_sets(
                 PostUpdate,

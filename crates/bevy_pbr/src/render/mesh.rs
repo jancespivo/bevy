@@ -48,6 +48,7 @@ use bevy_transform::components::GlobalTransform;
 use bevy_utils::{tracing::error, EntityHashMap, HashMap, Hashed};
 use std::cell::Cell;
 use thread_local::ThreadLocal;
+use bevy_render::extract_instances::ExtractedInstances;
 
 use crate::render::{
     morph::{
@@ -1103,14 +1104,14 @@ pub fn prepare_mesh_view_bind_groups(
     global_light_meta: Res<GlobalLightMeta>,
     fog_meta: Res<FogMeta>,
     view_uniforms: Res<ViewUniforms>,
+    tonemapping_instances: Res<ExtractedInstances<Tonemapping>>,
+    environment_map_instances: Res<ExtractedInstances<EnvironmentMapLight>>,
     views: Query<(
         Entity,
         &ViewShadowBindings,
         &ViewClusterBindings,
         Option<&ScreenSpaceAmbientOcclusionTextures>,
         Option<&ViewPrepassTextures>,
-        Option<&EnvironmentMapLight>,
-        &Tonemapping,
     )>,
     (images, mut fallback_images, fallback_cubemap): (
         Res<RenderAssets<Image>>,
@@ -1140,10 +1141,10 @@ pub fn prepare_mesh_view_bind_groups(
             view_cluster_bindings,
             ssao_textures,
             prepass_textures,
-            environment_map,
-            tonemapping,
         ) in &views
         {
+            let environment_map = environment_map_instances.get(&entity);
+            let Some(tonemapping) = tonemapping_instances.get(&entity) else {continue;};
             let fallback_ssao = fallback_images
                 .image_for_samplecount(1, TextureFormat::bevy_default())
                 .texture_view

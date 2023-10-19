@@ -6,7 +6,7 @@ use bevy_reflect::prelude::*;
 use bevy_render::{
     camera::Camera,
     color::Color,
-    extract_component::ExtractComponent,
+    extract_instances::ExtractInstance,
     extract_resource::ExtractResource,
     prelude::Projection,
     primitives::{Aabb, CascadesFrusta, CubemapFrusta, Frustum, HalfSpace, Sphere},
@@ -614,7 +614,7 @@ pub struct NotShadowReceiver;
 /// [Percentage Closer Filtering](https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing).
 ///
 /// Currently does not affect point lights.
-#[derive(Component, ExtractComponent, Reflect, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Component, ExtractInstance, Reflect, Clone, Copy, PartialEq, Eq, Default)]
 #[reflect(Component, Default)]
 pub enum ShadowFilteringMethod {
     /// Hardware 2x2.

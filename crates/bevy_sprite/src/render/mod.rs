@@ -36,6 +36,7 @@ use bevy_transform::components::GlobalTransform;
 use bevy_utils::{EntityHashMap, FloatOrd, HashMap};
 use bytemuck::{Pod, Zeroable};
 use fixedbitset::FixedBitSet;
+use bevy_render::extract_instances::ExtractedInstances;
 
 #[derive(Resource)]
 pub struct SpritePipeline {
@@ -498,19 +499,23 @@ pub fn queue_sprites(
     pipeline_cache: Res<PipelineCache>,
     msaa: Res<Msaa>,
     extracted_sprites: Res<ExtractedSprites>,
+    tonemapping_instances: Res<ExtractedInstances<Tonemapping>>,
+    dither_instances: Res<ExtractedInstances<DebandDither>>,
     mut views: Query<(
+        Entity,
         &mut RenderPhase<Transparent2d>,
         &VisibleEntities,
         &ExtractedView,
-        Option<&Tonemapping>,
-        Option<&DebandDither>,
     )>,
 ) {
     let msaa_key = SpritePipelineKey::from_msaa_samples(msaa.samples());
 
     let draw_sprite_function = draw_functions.read().id::<DrawSprite>();
 
-    for (mut transparent_phase, visible_entities, view, tonemapping, dither) in &mut views {
+    for (entity, mut transparent_phase, visible_entities, view) in &mut views {
+        let tonemapping = tonemapping_instances.get(&entity);
+        let dither = dither_instances.get(&entity);
+
         let mut view_key = SpritePipelineKey::from_hdr(view.hdr) | msaa_key;
 
         if !view.hdr {

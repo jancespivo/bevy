@@ -31,6 +31,7 @@ use bevy_utils::{
     HashMap,
 };
 use std::{hash::Hash, num::NonZeroU64, ops::Range};
+use bevy_render::extract_instances::ExtractedInstances;
 
 #[derive(Component)]
 pub struct ExtractedPointLight {
@@ -648,12 +649,12 @@ pub fn prepare_lights(
     render_queue: Res<RenderQueue>,
     mut global_light_meta: ResMut<GlobalLightMeta>,
     mut light_meta: ResMut<LightMeta>,
+    environment_map_instances: Res<ExtractedInstances<EnvironmentMapLight>>,
     views: Query<
         (
             Entity,
             &ExtractedView,
             &ExtractedClusterConfig,
-            Option<&EnvironmentMapLight>,
         ),
         With<RenderPhase<Transparent3d>>,
     >,
@@ -899,7 +900,8 @@ pub fn prepare_lights(
         .write_buffer(&render_device, &render_queue);
 
     // set up light data for each view
-    for (entity, extracted_view, clusters, environment_map) in &views {
+    for (entity, extracted_view, clusters) in &views {
+        let environment_map = environment_map_instances.get(&entity);
         let point_light_depth_texture = texture_cache.get(
             &render_device,
             TextureDescriptor {

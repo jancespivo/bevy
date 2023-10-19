@@ -99,7 +99,7 @@
 //! - [`Bundles`](crate::bundle::Bundles) (Provides Bundles metadata)
 //! - [`Components`](crate::component::Components) (Provides Components metadata)
 //! - [`Entities`](crate::entity::Entities) (Provides Entities metadata)
-//! - All tuples between 1 to 16 elements where each element implements [`SystemParam`]
+//! - All tuples between 1 to 17 elements where each element implements [`SystemParam`]
 //! - [`()` (unit primitive type)](https://doc.rust-lang.org/stable/std/primitive.unit.html)
 
 mod adapter_system;

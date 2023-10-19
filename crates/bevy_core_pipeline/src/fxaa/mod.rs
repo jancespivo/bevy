@@ -19,6 +19,7 @@ use bevy_render::{
     view::{ExtractedView, ViewTarget},
     Render, RenderApp, RenderSet,
 };
+use bevy_render::extract_instances::{ExtractedInstances, ExtractInstance, ExtractInstancesPlugin};
 
 mod node;
 
@@ -46,9 +47,9 @@ impl Sensitivity {
     }
 }
 
-#[derive(Reflect, Component, Clone, ExtractComponent)]
+#[derive(Reflect, Component, Clone, ExtractInstance)]
 #[reflect(Component, Default)]
-#[extract_component_filter(With<Camera>)]
+#[extract_instance_filter(With<Camera>)]
 pub struct Fxaa {
     /// Enable render passes for FXAA.
     pub enabled: bool,
@@ -84,7 +85,7 @@ impl Plugin for FxaaPlugin {
         load_internal_asset!(app, FXAA_SHADER_HANDLE, "fxaa.wgsl", Shader::from_wgsl);
 
         app.register_type::<Fxaa>();
-        app.add_plugins(ExtractComponentPlugin::<Fxaa>::default());
+        app.add_plugins(ExtractInstancesPlugin::<Fxaa>::extract_all());
 
         let render_app = match app.get_sub_app_mut(RenderApp) {
             Ok(render_app) => render_app,
@@ -203,9 +204,11 @@ pub fn prepare_fxaa_pipelines(
     pipeline_cache: Res<PipelineCache>,
     mut pipelines: ResMut<SpecializedRenderPipelines<FxaaPipeline>>,
     fxaa_pipeline: Res<FxaaPipeline>,
-    views: Query<(Entity, &ExtractedView, &Fxaa)>,
+    fxaa_instances: Res<ExtractedInstances<Fxaa>>,
+    views: Query<(Entity, &ExtractedView)>,
 ) {
-    for (entity, view, fxaa) in &views {
+    for (entity, view) in &views {
+        let Some(fxaa) = fxaa_instances.get(&entity) else {continue;};
         if !fxaa.enabled {
             continue;
         }

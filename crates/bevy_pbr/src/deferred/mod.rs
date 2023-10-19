@@ -29,6 +29,7 @@ use bevy_render::{
     render_graph::RenderGraphApp, render_resource::*, texture::BevyDefault, view::ExtractedView,
     RenderApp,
 };
+use bevy_render::extract_instances::{ExtractedInstances, ExtractInstance, ExtractInstancesPlugin};
 
 use crate::{
     EnvironmentMapLight, MeshPipelineKey, ShadowFilteringMethod, ViewFogUniformOffset,
@@ -44,7 +45,7 @@ pub const DEFAULT_PBR_DEFERRED_LIGHTING_PASS_ID: u8 = 1;
 
 /// Component with a `depth_id` for specifying which corresponding materials should be rendered by this specific PBR deferred lighting pass.
 /// Will be automatically added to entities with the [`DeferredPrepass`] component that don't already have a [`PbrDeferredLightingDepthId`].
-#[derive(Component, Clone, Copy, ExtractComponent, ShaderType)]
+#[derive(Component, Clone, Copy, ExtractInstance, ShaderType)]
 pub struct PbrDeferredLightingDepthId {
     depth_id: u32,
 
@@ -97,7 +98,7 @@ impl Default for PbrDeferredLightingDepthId {
 impl Plugin for DeferredPbrLightingPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
-            ExtractComponentPlugin::<PbrDeferredLightingDepthId>::default(),
+            ExtractInstancesPlugin::<PbrDeferredLightingDepthId>::extract_all(),
             UniformComponentPlugin::<PbrDeferredLightingDepthId>::default(),
         ))
         .add_systems(PostUpdate, insert_deferred_lighting_pass_id_component);
@@ -417,14 +418,14 @@ pub fn prepare_deferred_lighting_pipelines(
     pipeline_cache: Res<PipelineCache>,
     mut pipelines: ResMut<SpecializedRenderPipelines<DeferredLightingLayout>>,
     deferred_lighting_layout: Res<DeferredLightingLayout>,
+    tonemapping_instances: Res<ExtractedInstances<Tonemapping>>,
+    dither_instances: Res<ExtractedInstances<DebandDither>>,
+    environment_map_instances: Res<ExtractedInstances<EnvironmentMapLight>>,
+    shadow_filter_method_instances: Res<ExtractedInstances<ShadowFilteringMethod>>,
     views: Query<
         (
             Entity,
             &ExtractedView,
-            Option<&Tonemapping>,
-            Option<&DebandDither>,
-            Option<&EnvironmentMapLight>,
-            Option<&ShadowFilteringMethod>,
             Option<&ScreenSpaceAmbientOcclusionSettings>,
             (
                 Has<NormalPrepass>,
@@ -439,14 +440,15 @@ pub fn prepare_deferred_lighting_pipelines(
     for (
         entity,
         view,
-        tonemapping,
-        dither,
-        environment_map,
-        shadow_filter_method,
         ssao,
         (normal_prepass, depth_prepass, motion_vector_prepass),
     ) in &views
     {
+        let tonemapping = tonemapping_instances.get(&entity);
+        let dither = dither_instances.get(&entity);
+        let environment_map = environment_map_instances.get(&entity);
+        let shadow_filter_method = shadow_filter_method_instances.get(&entity);
+
         let mut view_key = MeshPipelineKey::from_hdr(view.hdr);
 
         if normal_prepass {

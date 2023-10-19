@@ -1,6 +1,7 @@
 mod as_bind_group;
 mod extract_component;
 mod extract_resource;
+mod extract_instances;
 
 use bevy_macro_utils::BevyManifest;
 use proc_macro::TokenStream;
@@ -47,6 +48,11 @@ pub fn derive_extract_resource(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(ExtractComponent, attributes(extract_component_filter))]
 pub fn derive_extract_component(input: TokenStream) -> TokenStream {
     extract_component::derive_extract_component(input)
+}
+
+#[proc_macro_derive(ExtractInstance, attributes(extract_instance_filter))]
+pub fn derive_extract_instance(input: TokenStream) -> TokenStream {
+    extract_instances::derive_extract_instance(input)
 }
 
 #[proc_macro_derive(

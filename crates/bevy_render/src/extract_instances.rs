@@ -4,6 +4,9 @@
 //! This is essentially the same as the `extract_component` module, but
 //! higher-performance because it avoids the ECS overhead.
 
+// Do not use it blindly to extract components when there is Query with With<Component> or Has<Component> in Render World used or when type Query is more complex than just `&'static Self`
+// In this case consider ExtractComponent
+
 use std::marker::PhantomData;
 
 use bevy_app::{App, Plugin};
@@ -17,7 +20,7 @@ use bevy_ecs::{
 use bevy_utils::EntityHashMap;
 
 use crate::{prelude::ViewVisibility, Extract, ExtractSchedule, RenderApp};
-
+pub use bevy_render_macros::ExtractInstance;
 /// Describes how to extract data needed for rendering from a component or
 /// components.
 ///
@@ -32,6 +35,7 @@ pub trait ExtractInstance: Send + Sync + Sized + 'static {
     type Query: WorldQuery + ReadOnlyWorldQuery;
     /// Filters the entities with additional constraints.
     type Filter: WorldQuery + ReadOnlyWorldQuery;
+
 
     /// Defines how the component is transferred into the "render world".
     fn extract(item: QueryItem<'_, Self::Query>) -> Option<Self>;
@@ -72,7 +76,7 @@ where
 {
     /// Creates a new [`ExtractInstancesPlugin`] that unconditionally extracts to
     /// the render world, whether the entity is visible or not.
-    pub fn new() -> Self {
+    pub fn extract_all() -> Self {
         Self {
             only_extract_visible: false,
             marker: PhantomData,

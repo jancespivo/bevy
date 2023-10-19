@@ -442,13 +442,14 @@ pub fn queue_material_meshes<M: Material>(
     mut render_mesh_instances: ResMut<RenderMeshInstances>,
     render_material_instances: Res<RenderMaterialInstances<M>>,
     images: Res<RenderAssets<Image>>,
+    tonemapping_instances: Res<ExtractedInstances<Tonemapping>>,
+    dither_instances: Res<ExtractedInstances<DebandDither>>,
+    environment_map_instances: Res<ExtractedInstances<EnvironmentMapLight>>,
+    shadow_filter_method_instances: Res<ExtractedInstances<ShadowFilteringMethod>>,
     mut views: Query<(
+        Entity,
         &ExtractedView,
         &VisibleEntities,
-        Option<&Tonemapping>,
-        Option<&DebandDither>,
-        Option<&EnvironmentMapLight>,
-        Option<&ShadowFilteringMethod>,
         Option<&ScreenSpaceAmbientOcclusionSettings>,
         (
             Has<NormalPrepass>,
@@ -465,12 +466,9 @@ pub fn queue_material_meshes<M: Material>(
     M::Data: PartialEq + Eq + Hash + Clone,
 {
     for (
+        entity,
         view,
         visible_entities,
-        tonemapping,
-        dither,
-        environment_map,
-        shadow_filter_method,
         ssao,
         (normal_prepass, depth_prepass, motion_vector_prepass, deferred_prepass),
         taa_settings,
@@ -479,6 +477,11 @@ pub fn queue_material_meshes<M: Material>(
         mut transparent_phase,
     ) in &mut views
     {
+        let tonemapping = tonemapping_instances.get(&entity);
+        let dither = dither_instances.get(&entity);
+        let environment_map = environment_map_instances.get(&entity);
+        let shadow_filter_method = shadow_filter_method_instances.get(&entity);
+
         let draw_opaque_pbr = opaque_draw_functions.read().id::<DrawMaterial<M>>();
         let draw_alpha_mask_pbr = alpha_mask_draw_functions.read().id::<DrawMaterial<M>>();
         let draw_transparent_pbr = transparent_draw_functions.read().id::<DrawMaterial<M>>();

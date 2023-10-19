@@ -5,6 +5,7 @@ use bevy_ecs::{prelude::Component, query::With};
 use bevy_reflect::Reflect;
 use bevy_render::{
     extract_component::{ExtractComponent, ExtractComponentPlugin},
+    extract_instances::{ExtractInstance, ExtractInstancesPlugin},
     render_asset::RenderAssets,
     render_resource::{
         BindGroupEntry, BindGroupLayoutEntry, BindingResource, BindingType, SamplerBindingType,
@@ -28,7 +29,7 @@ impl Plugin for EnvironmentMapPlugin {
         );
 
         app.register_type::<EnvironmentMapLight>()
-            .add_plugins(ExtractComponentPlugin::<EnvironmentMapLight>::default());
+            .add_plugins(ExtractInstancesPlugin::<EnvironmentMapLight>::extract_all());
     }
 }
 
@@ -46,7 +47,8 @@ impl Plugin for EnvironmentMapPlugin {
 /// The diffuse map uses the Lambertian distribution, and the specular map uses the GGX distribution.
 ///
 /// `KhronosGroup` also has several prefiltered environment maps that can be found [here](https://github.com/KhronosGroup/glTF-Sample-Environments).
-#[derive(Component, Reflect, Clone)]
+#[derive(Component, Reflect, Clone, ExtractInstance)]
+#[extract_instance_filter(With<Camera3d>)]
 pub struct EnvironmentMapLight {
     pub diffuse_map: Handle<Image>,
     pub specular_map: Handle<Image>,
@@ -57,16 +59,6 @@ impl EnvironmentMapLight {
     /// have been loaded by the asset server.
     pub fn is_loaded(&self, images: &RenderAssets<Image>) -> bool {
         images.get(&self.diffuse_map).is_some() && images.get(&self.specular_map).is_some()
-    }
-}
-
-impl ExtractComponent for EnvironmentMapLight {
-    type Query = &'static Self;
-    type Filter = With<Camera3d>;
-    type Out = Self;
-
-    fn extract_component(item: bevy_ecs::query::QueryItem<'_, Self::Query>) -> Option<Self::Out> {
-        Some(item.clone())
     }
 }
 

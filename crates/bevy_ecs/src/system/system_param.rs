@@ -1394,7 +1394,7 @@ macro_rules! impl_system_param_tuple {
     };
 }
 
-all_tuples!(impl_system_param_tuple, 0, 16, P);
+all_tuples!(impl_system_param_tuple, 0, 17, P);
 
 /// Contains type aliases for built-in [`SystemParam`]s with `'static` lifetimes.
 /// This makes it more convenient to refer to these types in contexts where
@@ -1636,6 +1636,7 @@ mod tests {
             _r14: Res<'w, R<14>>,
             _r15: Res<'w, R<15>>,
             _r16: Res<'w, R<16>>,
+            _r17: Res<'w, R<17>>,
         }
 
         fn long_system(_: LongParam) {}

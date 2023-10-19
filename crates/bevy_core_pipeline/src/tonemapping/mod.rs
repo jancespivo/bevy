@@ -4,7 +4,7 @@ use bevy_asset::{load_internal_asset, Assets, Handle};
 use bevy_ecs::prelude::*;
 use bevy_reflect::Reflect;
 use bevy_render::camera::Camera;
-use bevy_render::extract_component::{ExtractComponent, ExtractComponentPlugin};
+use bevy_render::extract_instances::{ExtractedInstances, ExtractInstance, ExtractInstancesPlugin};
 use bevy_render::extract_resource::{ExtractResource, ExtractResourcePlugin};
 use bevy_render::render_asset::RenderAssets;
 use bevy_render::renderer::RenderDevice;
@@ -87,8 +87,8 @@ impl Plugin for TonemappingPlugin {
         app.register_type::<DebandDither>();
 
         app.add_plugins((
-            ExtractComponentPlugin::<Tonemapping>::default(),
-            ExtractComponentPlugin::<DebandDither>::default(),
+            ExtractInstancesPlugin::<Tonemapping>::extract_all(),
+            ExtractInstancesPlugin::<DebandDither>::extract_all(),
         ));
 
         if let Ok(render_app) = app.get_sub_app_mut(RenderApp) {
@@ -115,9 +115,9 @@ pub struct TonemappingPipeline {
 
 /// Optionally enables a tonemapping shader that attempts to map linear input stimulus into a perceptually uniform image for a given [`Camera`] entity.
 #[derive(
-    Component, Debug, Hash, Clone, Copy, Reflect, Default, ExtractComponent, PartialEq, Eq,
+    Component, Debug, Hash, Clone, Copy, Reflect, Default, ExtractInstance, PartialEq, Eq,
 )]
-#[extract_component_filter(With<Camera>)]
+#[extract_instance_filter(With<Camera>)]
 #[reflect(Component)]
 pub enum Tonemapping {
     /// Bypass tonemapping.
@@ -276,9 +276,14 @@ pub fn prepare_view_tonemapping_pipelines(
     pipeline_cache: Res<PipelineCache>,
     mut pipelines: ResMut<SpecializedRenderPipelines<TonemappingPipeline>>,
     upscaling_pipeline: Res<TonemappingPipeline>,
-    view_targets: Query<(Entity, Option<&Tonemapping>, Option<&DebandDither>), With<ViewTarget>>,
+    tonemapping_instances: Res<ExtractedInstances<Tonemapping>>,
+    dither_instances: Res<ExtractedInstances<DebandDither>>,
+    view_targets: Query<Entity, With<ViewTarget>>,
 ) {
-    for (entity, tonemapping, dither) in view_targets.iter() {
+    for entity in view_targets.iter() {
+        let tonemapping = tonemapping_instances.get(&entity);
+        let dither = dither_instances.get(&entity);
+
         let key = TonemappingPipelineKey {
             deband_dither: *dither.unwrap_or(&DebandDither::Disabled),
             tonemapping: *tonemapping.unwrap_or(&Tonemapping::None),
@@ -292,9 +297,9 @@ pub fn prepare_view_tonemapping_pipelines(
 }
 /// Enables a debanding shader that applies dithering to mitigate color banding in the final image for a given [`Camera`] entity.
 #[derive(
-    Component, Debug, Hash, Clone, Copy, Reflect, Default, ExtractComponent, PartialEq, Eq,
+    Component, Debug, Hash, Clone, Copy, Reflect, Default, ExtractInstance, PartialEq, Eq,
 )]
-#[extract_component_filter(With<Camera>)]
+#[extract_instance_filter(With<Camera>)]
 #[reflect(Component)]
 pub enum DebandDither {
     #[default]

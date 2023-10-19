@@ -346,7 +346,7 @@ pub fn derive_system_param(input: TokenStream) -> TokenStream {
 
     // If the number of fields exceeds the 16-parameter limit,
     // fold the fields into tuples of tuples until we are below the limit.
-    const LIMIT: usize = 16;
+    const LIMIT: usize = 17;
     while tuple_types.len() > LIMIT {
         let end = Vec::from_iter(tuple_types.drain(..LIMIT));
         tuple_types.push(parse_quote!( (#(#end,)*) ));
